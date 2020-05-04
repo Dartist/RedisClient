@@ -62,6 +62,8 @@ class RedisClient {
   Map get stats => connection.stats;
 
   Future close() => connection.close();
+  
+  bool get isConnected => connection.isConnected;
 
 
 
@@ -304,6 +306,14 @@ class RedisClient {
   Future psetex(String key, int expireInMs, String value) => 
       connection.sendCommand(RedisCommand.PSETEX, 
           [ key, expireInMs.toString(), value ]).receiveStatus("OK");
+
+  /// If [key] does not exist, the key is added with the value of [value],
+  /// and true is returned.
+  ///
+  /// If [key] does exist, this operation has no effect and false is returned.
+  Future<bool> setnx(String key, Object value) =>
+      connection.sendCommandWithVariadicValues(RedisCommand.SETNX, [ key ],
+          serializer.serializeToList(value)).receiveBool();
 
   /**
    * Remove the existing timeout on key.
@@ -1447,7 +1457,7 @@ class RedisClient {
    * If field already exists, this operation has no effect.
    */
   Future<bool> hsetnx(String hashId, String key, Object value) => 
-      connection.sendCommandWithVariadicValues(RedisCommand.HSETNX, [ key ], 
+      connection.sendCommandWithVariadicValues(RedisCommand.HSETNX, [ hashId, key ], 
           serializer.serializeToList(value)).receiveBool();
   
   /**
